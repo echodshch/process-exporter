@@ -1,0 +1,28 @@
+vars_prompt:
+
+  - name: test_host
+    prompt: "enter {{ test_host }} name"
+
+tasks:
+
+  - name: install pmm-client
+    shell: sudo yum install https://repo.percona.com/yum/percona-release-latest.noarch.rpm -y && sudo yum install pmm2-client -y && sudo pmm-admin config --server-insecure-tls --server-url=https://{{ pmm_user }}:{{ pmm_passwd }}@{{ pmm_server }} {{ test_host_ip }} generic {{ test_host }}
+
+
+- name: block with sudo
+  block:
+
+    - name: check if gateway log exist
+      stat: 
+        path: /usr/bin/pmm-admin
+      register: pmm
+
+    - name: install pmm-client
+      shell: yum install https://repo.percona.com/yum/percona-release-latest.noarch.rpm -y && yum install pmm2-client -y && pmm-admin config --server-insecure-tls --server-url=https://{{ pmm_user }}:{{ pmm_passwd }}@{{ pmm_server }} {{ test_host_ip }} generic {{ test_host }}
+      when: pmm.stat.islnk is not defined
+
+    - name: install pmm-client
+      shell: pmm-admin config --server-insecure-tls --server-url=https://{{ pmm_user }}:{{ pmm_passwd }}@{{ pmm_server }} {{ test_host_ip }} generic {{ test_host }}
+      when: pmm.stat.exists
+
+  become: yes

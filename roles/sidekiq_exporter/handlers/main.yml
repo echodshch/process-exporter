@@ -1,0 +1,9 @@
+---
+
+- name: restart sidekiq_exporter
+  become: true
+  become_user: "{{ exporter_user }}"
+  systemd:
+    name: sidekiq_exporter
+    state: restarted
+  when: sidekiq_exporter_service_state != 'stopped'

@@ -1,0 +1,20 @@
+---
+- name: block with sudo
+  block:
+
+    - name: Create group
+      group:
+        name: "{{ exporter_group }}"
+        state: present
+
+    - name: create exporter user
+      user:
+        name: "{{ exporter_user }}"
+        group: "{{ exporter_group }}"
+        groups: "wheel"
+        password: "{{ default_user_password | password_hash('sha512','A512') }}"
+        system: no
+        shell: /bin/bash
+        createhome: no
+
+  become: true

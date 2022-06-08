@@ -1,0 +1,19 @@
+- name: block with sudo
+  block:
+
+    - name: check pmm-client exist
+      stat: 
+        path: /usr/bin/pmm-admin
+      register: pmm
+
+    - name: Install pmm-client 
+      yum:
+        name: "pmm-client-{{ pmm_install_version }}"
+        state: present
+        allow_downgrade: yes
+
+    - name: config pmm-client
+      command: pmm-admin config --server-insecure-tls --server-url=https://{{ pmm_user }}:{{ pmm_passwd }}@{{ pmm_server }} {{ ansible_facts.eth0.ipv4.address }} generic {{ pmm_hostname }}
+      when: pmm.stat.exists
+
+  become: yes

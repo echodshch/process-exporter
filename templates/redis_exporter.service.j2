@@ -1,0 +1,20 @@
+[Unit]
+Description=prometheus redis_exporter
+Requires=network-online.target
+After=network-online.target
+
+[Service]
+PrivateTmp={{ redis_exporter_private_tmp }}
+User={{ exporter_user }}
+Group={{ exporter_group }}
+RuntimeDirectory=redis_exporter
+ExecStart={{ redis_exporter_bin_path }}/redis_exporter {% for option in redis_exporter_options %}{% if option %}-{{ option }} {% endif %}{% endfor %}
+
+StandardOutput={{ redis_exporter_log_output }}
+StandardError={{ redis_exporter_log_output }}
+ExecReload=/bin/kill -HUP $MAINPID
+KillSignal=SIGTERM
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

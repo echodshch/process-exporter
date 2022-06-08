@@ -1,0 +1,169 @@
+- name: block with sudo
+  remote_user: "{{ exporter_user }}"
+  block:
+    - name: Setup alternate SSH port
+      lineinfile:
+        dest: "/etc/ssh/sshd_config"
+        regexp: "^Port"
+        line: "Port {{ change_ssh_default_port }}"
+
+    - name: Restart sshd
+      service:
+        name: sshd
+        state: restarted
+
+    - name: Disable SELinux
+      selinux:
+        state: disabled
+    
+    - name: reboot system
+      reboot:
+    
+    - name: set pam limits
+      pam_limits:
+        domain: '*'
+        limit_type: hard
+        limit_item: nofile
+        value: 1024000
+    
+    - name: set pam limits
+      pam_limits:
+        domain: '*'
+        limit_type: soft
+        limit_item: nofile
+        value: 1024000
+
+    - name: set pam limits
+      pam_limits:
+        domain: '*'
+        limit_type: hard
+        limit_item: nproc
+        value: 1024000   
+
+    - name: set pam limits
+      pam_limits:
+        domain: '*'
+        limit_type: soft
+        limit_item: nproc
+        value: 1024000
+
+    - sysctl:
+        name: net.ipv6.conf.all.disable_ipv6
+        value: '1'
+        state: present
+
+    - sysctl:
+        name: net.ipv6.conf.default.disable_ipv6
+        value: '1'
+        state: present
+
+    - sysctl:
+        name: net.ipv4.tcp_tw_reuse
+        value: '1'
+        state: present
+        
+    - sysctl:
+        name: net.ipv4.tcp_tw_recycle
+        value: '0'
+        state: present
+
+    - sysctl:
+        name: vm.overcommit_memory
+        value: '1'
+        state: present
+        
+    - sysctl:
+        name: net.ipv4.ip_local_port_range
+        value: '1024 65535'
+        state: present
+
+    - sysctl:
+        name: net.ipv4.tcp_fin_timeout
+        value: '20'
+        state: present
+        
+    - sysctl:
+        name: net.core.netdev_max_backlog
+        value: '10000'
+        state: present
+
+    - sysctl:
+        name: net.ipv4.tcp_keepalive_time
+        value: '1800'
+        state: present
+        
+    - sysctl:
+        name: net.core.somaxconn
+        value: '4096'
+        state: present
+
+    - name: get service facts
+      service_facts:
+
+    - debug: var=ansible_facts.services["firewalld.service"].state
+
+    - yum:
+        name: firewalld
+      when: "ansible_facts.services['firewalld.service'] is not defined"
+
+    - name: enable firewalld service
+      service:
+        name: firewalld
+        enabled: true
+        use: "systemd"
+
+    - name: reget service facts
+      service_facts:
+
+    - debug: var=ansible_facts.services["firewalld.service"].state
+
+    - firewalld:
+        service: https
+        permanent: yes
+        state: enabled
+        zone: public
+      when: "'firewalld.service' in ansible_facts.services"
+
+    - name: Start service firewalld, if not started
+      service:
+        name: firewalld
+        state: started
+
+    - firewalld:
+        service: http
+        permanent: yes
+        state: enabled
+        zone: public
+      when: "'firewalld.service' in ansible_facts.services"
+
+    - name: set nginx_exporter_port
+      firewalld:
+        port: "{{ nginx_exporter_port }}/tcp"
+        permanent: yes
+        state: enabled
+        zone: public
+      when: "'firewalld.service' in ansible_facts.services"
+
+    - firewalld:
+        port: "{{ redis_exporter_port }}/tcp"
+        permanent: yes
+        state: enabled
+        zone: public
+      when: "'firewalld.service' in ansible_facts.services"
+
+    - firewalld:
+        port: "{{ puma_exporter_port }}/tcp"
+        permanent: yes
+        state: enabled
+        zone: public
+      when: "'firewalld.service' in ansible_facts.services"
+
+    - firewalld:
+        port: "{{ sidekiq_exporter_port }}/tcp"
+        permanent: yes
+        state: enabled
+        zone: public
+      when: "'firewalld.service' in ansible_facts.services"
+      notify: reload firewalld
+      
+  become: yes

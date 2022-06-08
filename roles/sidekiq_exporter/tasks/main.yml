@@ -1,0 +1,62 @@
+---
+- name: block with sudo
+  remote_user: "{{ exporter_user }}"
+  block:
+
+    - name: logs
+      file:
+        path: "{{ sidekiq_exporter_log_path }}"
+        owner: "{{ exporter_user }}"
+        group: "{{ exporter_group }}"
+        mode: "u=rwx,g=rx,o="
+        state: directory
+
+    - name: Ensure skeleton bin paths
+      file:
+        dest: "{{ item }}"
+        owner: "{{ exporter_user }}"
+        group: "{{ exporter_group }}"
+        state: directory
+      with_items:
+        - "{{ sidekiq_exporter_bin_path }}"
+    
+    - name: Ensure skeleton log paths
+      file:
+        dest: "{{ item }}"
+        owner: "{{ exporter_user }}"
+        group: "{{ exporter_group }}"
+        state: directory
+      with_items:
+        - "{{ sidekiq_exporter_log_path }}"
+      when: sidekiq_exporter_log_path is defined
+    
+    
+    - name: Check sidekiq_exporter version
+      command: sidekiq_exporter -version
+      register: sidekiq_exporter_check
+      changed_when: false
+      ignore_errors: true
+    
+    - name: Copy logrotate config
+      template:
+        src: logrotate.j2
+        dest: /etc/logrotate.d/sidekiq_exporter
+        mode: 0644
+        owner: root
+        group: root
+      when: sidekiq_exporter_log_path is defined
+   
+    - name: Service
+      include: service-systemd.yml
+ 
+    - name: Configuring service
+      systemd:
+        name: sidekiq_exporter
+        state: "{{ sidekiq_exporter_service_state }}"
+        enabled: "{{ sidekiq_exporter_service_enabled }}"
+        daemon_reload: yes
+
+    - name: add sidekiq to pmm server
+      shell: pmm-admin add external --service-name={{ pmm_hostname }}_sidekiq_exporter --listen-port={{ sidekiq_exporter_port }} --metrics-path=metrics
+
+  become: yes

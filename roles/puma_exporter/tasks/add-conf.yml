@@ -1,0 +1,23 @@
+    - name: Insert text into rails-helpdesk/config/puma.rb
+      blockinfile:
+        path: /var/www/rails-helpdesk/config/puma.rb
+        block: "{{ lookup('template', 'puma.conf') }}"
+        marker: ""
+
+    - name: Insert text into rails-helpdesk/.env
+      blockinfile:
+        path: /var/www/rails-helpdesk/.env
+        block: "{{ lookup('template', 'puma-env.conf') }}"
+        marker: ""        
+
+    - name: Insert text into livechat/config/puma.rb
+      blockinfile:
+        path: /var/www/livechat/config/puma.rb
+        block: "{{ lookup('template', 'puma.conf') }}"
+        marker: ""
+
+    - name: Insert text into livechat/.env
+      blockinfile:
+        path: /var/www/livechat/.env
+        block: "{{ lookup('template', 'puma-env.conf') }}"
+        marker: ""        

@@ -1,0 +1,11 @@
+- hosts: " {{ pmm_hostname }} "
+  gather_facts: true
+  roles:
+    - create_user
+    - install_pmm-agent
+    - system_config
+    - prometheus_exporter
+    - nginx_exporter
+    - redis_exporter
+    - puma_exporter
+    - sidekiq_exporter

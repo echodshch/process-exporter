@@ -1,0 +1,22 @@
+- name: block with sudo
+  block:
+
+    - name: check if pmm-client installed
+      stat: 
+        path: /usr/bin/pmm-admin
+      register: pmm
+
+    - name: Install pmm-client 
+      yum:
+        name: https://repo.percona.com/yum/percona-release-latest.noarch.rpm
+        state: present
+        allow_downgrade: yes
+
+    - name: config pmm-client
+      command: pmm-admin config --server-insecure-tls --server-url=https://{{ pmm_user }}:{{ pmm_passwd }}@{{ pmm_server }} {{ ansible_facts.eth0.ipv4.address }} generic {{ pmm_hostname }}
+      when: pmm.stat.exists
+
+    - name: add conf
+      include: add-conf.yml
+      
+  become: yes

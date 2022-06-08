@@ -1,0 +1,9 @@
+---
+
+- name: restart redis_exporter
+  become: true
+  become_user: root
+  systemd:
+    name: redis_exporter
+    state: restarted
+  when: redis_exporter_service_state != 'stopped'

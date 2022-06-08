@@ -1,0 +1,19 @@
+[Unit]
+Description=puma_exporter
+After=multi-user.target
+
+[Service]
+User=chat2desk
+Restart=always
+Type=simple
+WorkingDirectory=/var/www/rails-helpdesk/
+
+ExecStart=/bin/bash -c -l 'bundle exec prometheus_exporter -p 9394'
+ExecReload=/bin/kill -s HUP $MAINPID
+ExecStop=/bin/kill -s TERM $MAINPID
+
+RestartSec=15
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,5 @@
+    - name: Insert text into rails-helpdesk/config/puma.rb
+      blockinfile:
+        path: /var/www/rails-helpdesk/config/puma.rb
+        block: "{{ bind 'tcp://0.0.0.0:9293' }}"
+        marker: ""

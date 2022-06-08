@@ -1,0 +1,9 @@
+---
+
+- name: restart puma_exporter
+  become: true
+  become_user: "{{ exporter_user }}"
+  systemd:
+    name: puma_exporter
+    state: restarted
+  when: puma_exporter_service_state != 'stopped'

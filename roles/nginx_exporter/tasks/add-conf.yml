@@ -1,0 +1,5 @@
+- name: Insert text into /etc/nginx/sites-enabled/nginx_status.conf
+  blockinfile:
+    path: /etc/nginx/sites-enabled/nginx_status.conf
+    block: "{{ lookup('template', 'nginx.conf') }}"
+    marker: ""

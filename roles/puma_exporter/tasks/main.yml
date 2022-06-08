@@ -1,0 +1,65 @@
+---
+- name: block with sudo
+  remote_user: "{{ exporter_user }}"
+  block:
+
+    - name: logs
+      file:
+        path: "{{ puma_exporter_log_path }}"
+        owner: "{{ exporter_user }}"
+        group: "{{ exporter_group }}"
+        mode: "u=rwx,g=rx,o="
+        state: directory
+
+    - name: Ensure skeleton bin paths
+      file:
+        dest: "{{ item }}"
+        owner: "{{ exporter_user }}"
+        group: "{{ exporter_group }}"
+        state: directory
+      with_items:
+        - "{{ puma_exporter_bin_path }}"
+    
+    - name: Ensure skeleton log paths
+      file:
+        dest: "{{ item }}"
+        owner: "{{ exporter_user }}"
+        group: "{{ exporter_group }}"
+        state: directory
+      with_items:
+        - "{{ puma_exporter_log_path }}"
+      when: puma_exporter_log_path is defined
+    
+    
+    - name: Check puma_exporter version
+      command: puma_exporter -version
+      register: puma_exporter_check
+      changed_when: false
+      ignore_errors: true
+    
+    - name: Copy logrotate config
+      template:
+        src: logrotate.j2
+        dest: /etc/logrotate.d/puma_exporter
+        mode: 0644
+        owner: root
+        group: root
+      when: puma_exporter_log_path is defined
+   
+    - name: Service
+      include: service-systemd.yml
+ 
+    - name: Configuring service
+      systemd:
+        name: puma_exporter
+        state: "{{ puma_exporter_service_state }}"
+        enabled: "{{ puma_exporter_service_enabled }}"
+        daemon_reload: yes
+
+    - name: add puma to pmm server
+      shell: pmm-admin add external --service-name={{ pmm_hostname }}_puma_exporter --listen-port={{ puma_exporter_port }} --metrics-path=metrics
+
+    - name: add conf
+      include: add-conf.yml
+      
+  become: yes

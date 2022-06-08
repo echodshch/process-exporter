@@ -1,0 +1,93 @@
+---
+- name: block with sudo
+  remote_user: "{{ exporter_user }}"
+  block:
+
+    - name: logs
+      file:
+        path: "{{ redis_exporter_log_path }}"
+        owner: "{{ exporter_user }}"
+        group: "{{ exporter_group }}"
+        mode: "u=rwx,g=rx,o="
+        state: directory
+
+    - name: REDIS_EXPORTER | Ensure skeleton bin paths
+      file:
+        dest: "{{ item }}"
+        owner: "{{ exporter_user }}"
+        group: "{{ exporter_group }}"
+        state: directory
+      with_items:
+        - "{{ redis_exporter_bin_path }}"
+    
+    - name: REDIS_EXPORTER | Ensure skeleton log paths
+      file:
+        dest: "{{ item }}"
+        owner: "{{ exporter_user }}"
+        group: "{{ exporter_group }}"
+        state: directory
+      with_items:
+        - "{{ redis_exporter_log_path }}"
+      when: redis_exporter_log_path is defined
+    
+    
+    - name: REDIS_EXPORTER | Check redis_exporter version
+      command: redis_exporter -version
+      register: redis_exporter_check
+      changed_when: false
+      ignore_errors: true
+    
+    - name: REDIS_EXPORTER | Download package
+      get_url:
+        url: "{{ redis_exporter_url }}"
+        dest: "{{ redis_exporter_package_path }}"
+      when: redis_exporter_force_reinstall or redis_exporter_check is failed or redis_exporter_version not in redis_exporter_check.stderr
+    
+    - name: REDIS_EXPORTER | Extract downloaded package
+      unarchive:
+        src: "{{ redis_exporter_package_path }}"
+        dest: "{{ redis_exporter_download_path }}"
+        remote_src: True
+      when: redis_exporter_force_reinstall or redis_exporter_check is failed or redis_exporter_version  not in redis_exporter_check.stderr
+    
+    - name: REDIS_EXPORTER | Copy binary
+      copy:
+        src: "{{ redis_exporter_src_bin }}"
+        dest: "{{ redis_exporter_bin_path }}/redis_exporter"
+        owner: "{{ exporter_user }}"
+        group: "{{ exporter_group }}"
+        remote_src: True
+        mode: 0755
+      when: redis_exporter_force_reinstall or redis_exporter_check is failed or redis_exporter_version not in redis_exporter_check.stderr
+      notify: restart redis_exporter
+    
+    - name: REDIS_EXPORTER | Link binary
+      file:
+        src: "{{ redis_exporter_bin_path }}/redis_exporter"
+        dest: "/usr/bin/redis_exporter"
+        state: link
+      when: redis_exporter_force_reinstall or redis_exporter_check is failed or redis_exporter_version  not in redis_exporter_check.stderr
+    
+    - name: REDIS_EXPORTER | Copy logrotate config
+      template:
+        src: logrotate.j2
+        dest: /etc/logrotate.d/redis_exporter
+        mode: 0644
+        owner: root
+        group: root
+      when: redis_exporter_log_path is defined
+   
+    - name: REDIS_EXPORTER | Service
+      include: service-systemd.yml
+ 
+    - name: REDIS_EXPORTER | Configuring service
+      systemd:
+        name: redis_exporter
+        state: "{{ redis_exporter_service_state }}"
+        enabled: "{{ redis_exporter_service_enabled }}"
+        daemon_reload: yes
+
+    - name: add redis to pmm server
+      shell: pmm-admin add external --service-name={{ pmm_hostname }}_redis_exporter --listen-port={{ redis_exporter_port }} --metrics-path=metrics
+
+  become: yes

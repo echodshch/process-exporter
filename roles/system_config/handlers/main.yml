@@ -1,0 +1,8 @@
+- name: reload firewalld
+  become: true
+  become_user: "{{ exporter_user }}"
+  service:
+    name: firewalld
+    state: "{{ (firewalld_service_state != 'stopped') | ternary('restarted', 'stopped') }}"
+    use: "{{ ansible_service_mgr }}"
+  when: firewalld_service_notify and ( _firewalld_service_state is not defined or not ( _firewalld_service_state is changed ))
