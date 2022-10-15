@@ -10,7 +10,7 @@ change_ssh_default_port: 22
 ##NODE_EXPORTER
 
 exporter_user: node_exporter
-default_user_password: gdfcj
+default_user_password: foopassword
 exporter_user_manage: true
 exporter_group: node_exporter
 exporter_group_manage: true
