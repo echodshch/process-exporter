@@ -1,4 +1,4 @@
-- hosts: " {{ pmm_hostname }} "
+- hosts: all
   gather_facts: true
   roles:
     - create_user
