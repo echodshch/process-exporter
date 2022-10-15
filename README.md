@@ -1,4 +1,4 @@
-# process-exporter ansible playbook
+# Prometheus process-exporter ansible playbook
 This playbook created for install&configure prometheus exporters and Percona management&monitoring client on nodes. 
 
 Configurate system, install pmm-client, register node and exporters on pmm monitoring server. Include node_exporter, nginx_exporter, puma_exporter, postgres_exporter, redis_exporter and sidekiq_exporter.
