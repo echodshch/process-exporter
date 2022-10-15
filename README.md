@@ -11,4 +11,5 @@ Puma and sidekiq exporters suitable with Ruby Bundler.
 NB: This playbook is not perfect - explore it carefully before using it
 
 Role nginx_exporter was created based on https://github.com/bdellegrazie/ansible-role-nginx_exporter/
+
 Role redis_exporter was created based on https://github.com/idealista/prometheus_redis_exporter_role/
