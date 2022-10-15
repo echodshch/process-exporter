@@ -1,6 +1,0 @@
----
-# Don't use upstart here - its too old
-prometheus_exporter_service_mgr: sysvinit
-
-prometheus_exporter_ansible_packages:
-  - "{{ 'libselinux-python' if ansible_facts['python']['version']['major'] == 2 else 'python3-selinux' }}"
