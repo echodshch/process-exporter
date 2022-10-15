@@ -1,23 +1,4 @@
-[c2d_test_servers]
+[group1]
 
-c2d_temporary ansible_host=178.154.221.242 ansible_port=6622 ansible_user=chat2desk
-c2d_test_1 ansible_host=84.201.173.56 ansible_port=6622 ansible_user=chat2desk 
-c2d_test_2 ansible_host=84.201.174.135 ansible_port=6622 ansible_user=chat2desk 
-c2d_test_3 ansible_host=130.193.38.156 ansible_port=6622 ansible_user=chat2desk 
-c2d_test_4 ansible_host=130.193.38.74 ansible_port=6622 ansible_user=chat2desk 
-c2d_test_5 ansible_host=84.201.133.186 ansible_port=6622 ansible_user=chat2desk 
-c2d_test_6 ansible_host=178.154.246.50 ansible_port=6622 ansible_user=chat2desk 
-c2d_test_7 ansible_host=130.193.39.68 ansible_port=6622 ansible_user=chat2desk 
-c2d_test_8 ansible_host=130.193.37.72 ansible_port=6622 ansible_user=chat2desk 
-c2d_test_9 ansible_host=130.193.37.96 ansible_port=6622 ansible_user=chat2desk 
-c2d_test_10 ansible_host=84.201.131.231 ansible_port=6622 ansible_user=chat2desk 
-c2d_test_11 ansible_host=84.201.159.90 ansible_port=6622 ansible_user=chat2desk 
-c2d_test_12 ansible_host=130.193.37.131 ansible_port=6622 ansible_user=chat2desk 
-c2d_test_13 ansible_host=178.154.224.153 ansible_port=6622 ansible_user=chat2desk 
-c2d_test_14 ansible_host=178.154.225.155 ansible_port=6622 ansible_user=chat2desk 
-c2d_test_15 ansible_host=130.193.38.0 ansible_port=6622 ansible_user=chat2desk 
-c2d_test_16 ansible_host=178.154.207.108 ansible_port=6622 ansible_user=chat2desk
-c2d_test_17 ansible_host=178.154.200.154 ansible_port=6622 ansible_user=chat2desk
-c2d_test_18 ansible_host=51.250.12.99 ansible_port=6622 ansible_user=chat2desk
-c2d_test_19 ansible_host=51.250.4.104 ansible_port=6622 ansible_user=chat2desk
-c2d_test_20 ansible_host=51.250.8.209 ansible_port=6622 ansible_user=chat2desk
+host1 ansible_host=<ip address> ansible_port= ansible_user=
+
