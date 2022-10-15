@@ -1,0 +1,112 @@
+---
+- name: block with sudo
+  remote_user: "{{ postgres_exporter_user }}"
+  block:
+
+    - name: Distribution Directory
+      become: true
+      become_user: root
+      file:
+        path: "{{ node_exporter_dist_dir }}"
+        owner: root
+        group: root
+        mode: "u=rwx,go=rx"
+        state: directory
+
+    - name: logs
+      file:
+        path: "{{ postgres_exporter_log_path }}"
+        owner: "{{ postgres_exporter_user }}"
+        group: "{{ postgres_exporter_group }}"
+        mode: "u=rwx,g=rx,o="
+        state: directory
+    
+    - name: download tarball
+      get_url:
+        url: "{{ postgres_exporter_tarball_url }}"
+        checksum: "{{ postgres_exporter_tarball_checksum }}"
+        dest: "{{ node_exporter_dist_dir }}/{{ postgres_exporter_signature }}.tar.gz"
+        owner: root
+        group: root
+        mode: "u=rwx,go=rx"
+    
+    - name: make distribution directory
+      file:
+        path: "{{ postgres_exporter_dist_dir }}"
+        owner: root
+        group: root
+        mode: "u=rwx,go=rx"
+        state: directory
+    
+    - name: untar tarball
+      unarchive:
+        src: "{{ node_exporter_dist_dir }}/{{ postgres_exporter_signature }}.tar.gz"
+        dest: "{{ postgres_exporter_dist_dir }}"
+        remote_src: true
+        owner: root
+        group: root
+        mode: "u=rwx,go=rx"
+        creates: "{{ postgres_exporter_dist_dir }}/postgres_exporter-0.11.1.linux-amd64"
+
+    - name: make bin directory
+      file:
+        path: "/opt/postgres_exporter/bin"
+        owner: "{{ postgres_exporter_user }}"
+        group: "{{ postgres_exporter_group }}"
+        mode: "u=rwx,go=rx"
+        state: directory
+
+    - name: Copy binary
+      copy:
+        src: "{{ postgres_exporter_dist_dir }}/{{ postgres_exporter_signature }}/postgres_exporter"
+        dest: "/opt/postgres_exporter/bin/postgres_exporter"
+        owner: "{{ postgres_exporter_user }}"
+        group: "{{ postgres_exporter_group }}"
+        remote_src: True
+        mode: 0755
+      notify: restart postgres_exporter
+
+    - name: symlink
+      file:
+        src: "/opt/postgres_exporter/bin/postgres_exporter"
+        dest: "/usr/bin/postgres_exporter"
+        owner: "{{ postgres_exporter_user }}"
+        group: "{{ postgres_exporter_group }}"
+        force: true
+        state: link
+      notify: restart postgres_exporter
+    
+    - name: config
+      template:
+        src: "postgres_exporter.default.conf"
+        dest: "/etc/default/postgres_exporter"
+        owner: root
+        group: root
+        mode: "u=rw,go=r"
+      notify: restart postgres_exporter
+    
+    - name: install service
+      include: service-systemd.yml
+    
+    - name: Service Enabled
+      service:
+        name: postgres_exporter
+        enabled: "{{ postgres_exporter_service_enable }}"
+        use: "systemd"
+      when: postgres_exporter_service_manage
+    
+    - name: Service State
+      service:
+        name: postgres_exporter
+        state: "{{ postgres_exporter_service_state }}"
+        use: "{{ node_exporter_service_mgr }}"
+      register: _postgres_exporter_service_state
+      when: postgres_exporter_service_manage
+
+#    - name: add postgres to pmm server
+#      shell: pmm-admin add external --service-name={{ pmm_hostname }}_postgres_exporter --listen-port={{ postgres_exporter_port }}
+
+#    - name: add conf
+#      include: add-conf.yml
+
+  become: true
