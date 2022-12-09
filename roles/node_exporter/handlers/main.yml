@@ -1,0 +1,16 @@
+- name: restart node_exporter
+  become: true
+  become_user: "{{ exporter_user }}"
+  service:
+    name: node_exporter
+    state: "{{ (node_exporter_service_state != 'stopped') | ternary('restarted', 'stopped') }}"
+    use: "{{ ansible_service_mgr }}"
+  when: node_exporter_service_notify and (
+    _node_exporter_service_state is not defined or
+    not ( _node_exporter_service_state is changed ))
+
+- name: reload systemd daemon
+  become: true
+  become_user: root
+  systemd:
+    daemon-reload: true

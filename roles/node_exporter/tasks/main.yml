@@ -1,0 +1,92 @@
+---
+- name: block with sudo
+  remote_user: "{{ exporter_user }}"
+  block:
+    
+    - name: make distribution directory
+      file:
+        path: "{{ node_exporter_dist_dir }}"
+        owner: root
+        group: root
+        mode: "u=rwx,go=rx"
+        state: directory
+    
+    - name: logs
+      file:
+        path: "{{ node_exporter_log_path }}"
+        owner: "{{ exporter_user }}"
+        group: "{{ exporter_group }}"
+        mode: "u=rwx,g=rx,o="
+        state: directory
+    
+    - name: download tarball
+      get_url:
+        url: "{{ node_exporter_tarball_url }}"
+        dest: "{{ node_exporter_dist_dir }}/{{ node_exporter_signature }}.tar.gz"
+        owner: root
+        group: root
+        mode: "u=rwx,go=rx"
+    
+    - name: untar tarball
+      unarchive:
+        src: "{{ node_exporter_dist_dir }}/{{ node_exporter_signature }}.tar.gz"
+        dest: "{{ node_exporter_dist_dir }}"
+        remote_src: true
+        owner: root
+        group: root
+        mode: "u=rwx,go=rx"
+        creates: "{{ node_exporter_dist_dir }}/{{ node_exporter_signature }}"
+
+    - name: make bin directory
+      file:
+        path: "/opt/node_exporter/bin"
+        owner: "{{ exporter_user }}"
+        group: "{{ exporter_group }}"
+        mode: "u=rwx,go=rx"
+        state: directory
+
+    - name: Copy binary
+      copy:
+        src: "{{ node_exporter_dist_dir }}/{{ node_exporter_signature }}/node_exporter"
+        dest: "/opt/node_exporter/bin/node_exporter"
+        owner: "{{ exporter_user }}"
+        group: "{{ exporter_group }}"
+        remote_src: True
+        mode: 0755
+      notify: restart node_exporter
+
+    - name: symlink
+      file:
+        src: "/opt/node_exporter/bin/node_exporter"
+        dest: "/usr/bin/node_exporter"
+        owner: "{{ exporter_user }}"
+        group: "{{ exporter_group }}"
+        force: true
+        state: link
+      notify: restart node_exporter
+    
+    - name: install service
+      include: service-systemd.yml
+    
+    - name: Service Enabled
+      service:
+        name: node_exporter
+        enabled: "{{ node_exporter_service_enable }}"
+        use: "systemd"
+      when: "{{ node_exporter_service_manage }}"
+    
+    - name: Service State
+      service:
+        name: node_exporter
+        state: "{{ node_exporter_service_state }}"
+        use: "{{ node_exporter_service_mgr }}"
+      register: node_exporter_service_state
+      when: node_exporter_service_manage
+
+#    - name: add node to pmm server
+#      shell: pmm-admin add external --service-name={{ pmm_hostname }}_node_exporter --listen-port={{ node_exporter_port }}
+
+#    - name: add conf
+#      include: add-conf.yml
+
+  become: true    
